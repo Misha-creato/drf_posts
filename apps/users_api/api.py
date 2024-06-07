@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,7 +9,7 @@ from users_api.serializers import (
     RegisterSerializer,
     CustomUserSerializer,
 )
-from users_api.services import authenticate_user
+from users_api.services import authenticate_user, create_user, update_user
 
 
 class RegisterView(APIView):
@@ -16,7 +18,9 @@ class RegisterView(APIView):
             data=request.data,
         )
         if serializer.is_valid():
-            serializer.save()
+            create_user(
+                validated_data=serializer.validated_data,
+            )
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED,
@@ -29,12 +33,12 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
-        status_code, response = authenticate_user(
+        response = authenticate_user(
             request=request,
         )
         return Response(
-            data=response,
-            status=status_code,
+            data=response['message'],
+            status=response['code'],
         )
 
 
@@ -48,39 +52,27 @@ class CustomUserView(APIView):
             data=serializer.data,
         )
 
-    # def patch(self, request, pk, *args, **kwargs):
-    #     user = request.user
-    #     serializer = CustomUserSerializer(
-    #         user,
-    #         data=request.data,
-    #     )
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(
-    #             data=serializer.data,
-    #         )
-    #     return Response(
-    #         data=serializer.errors,
-    #         status=status.HTTP_400_BAD_REQUEST,
-    #     )
-
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         user = request.user
         serializer = CustomUserSerializer(
             user,
             data=request.data,
         )
         if serializer.is_valid():
-            serializer.save()
+            response = update_user(
+                user=user,
+                validated_data=serializer.validated_data,
+            )
             return Response(
-                data=serializer.data,
+                data=response['message'],
+                status=response['code'],
             )
         return Response(
             data=serializer.errors,
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs): #TODO
         user = request.user
         user.delete()
         return Response(
