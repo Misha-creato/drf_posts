@@ -1,8 +1,8 @@
 import io
 import uuid
 from datetime import timedelta
-
 from PIL import Image
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.conf import settings
@@ -12,7 +12,6 @@ from django.contrib.auth.models import (
     BaseUserManager,
 )
 from django.utils import timezone
-
 
 AVATAR_SIZE_WIDTH = 100
 AVATAR_SIZE_HEIGHT = 100
@@ -43,16 +42,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         unique=True,
     )
     avatar = models.ImageField(
+        default='avatars/default.jpeg',
         verbose_name='Аватар',
         upload_to='avatars',
-        null=True,
-        blank=True,
     )
     thumbnail = models.ImageField(
+        default='thumbnails/default.jpeg',
         verbose_name='Миниатюра',
         upload_to='thumbnails',
-        null=True,
-        blank=True,
     )
     is_superuser = models.BooleanField(
         verbose_name='Статус суперпользователя',
@@ -87,7 +84,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     def __make_thumbnail(self):
-        with Image.open(self.logo) as img:
+        with Image.open(self.avatar) as img:
             if img.mode in ('RGBA', 'LA'):
                 img = img.convert('RGB')
 
@@ -95,15 +92,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             thumb = io.BytesIO()
             img.save(thumb, format='JPEG', quality=90)
 
-            self.thumbnail = SimpleUploadedFile(self.logo.name, thumb.getvalue())
+            self.thumbnail = SimpleUploadedFile(self.avatar.name, thumb.getvalue())
 
     def save(self, *args, **kwargs):
-        if self.avatar:
-            if self.pk:
-                old_avatar = CustomUser.objects.get(pk=self.pk).logo
-                if self.avatar != old_avatar:
-                    self.__make_thumbnail()
-            else:
+        if self.avatar and self.pk:
+            old_avatar = CustomUser.objects.get(pk=self.pk).avatar
+            if self.avatar != old_avatar:
                 self.__make_thumbnail()
         super().save(*args, **kwargs)
 
@@ -114,16 +108,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 
 class CustomToken(models.Model):
-    key = models.CharField(
-        verbose_name='Ключ',
-        max_length=40,
-        primary_key=True,
-    )
     user = models.OneToOneField(
-        verbose_name='User',
+        verbose_name='Пользователь',
         to=settings.AUTH_USER_MODEL,
         related_name='auth_token',
         on_delete=models.CASCADE,
+    )
+    key = models.CharField(
+        verbose_name='Ключ',
+        max_length=64,
+        primary_key=True,
     )
     created_at = models.DateTimeField(
         verbose_name='Дата создания',
@@ -143,8 +137,13 @@ class CustomToken(models.Model):
     def __generate_key(self):
         return str(uuid.uuid4())
 
+    def is_expired(self):
+        return self.expires_at <= timezone.now()
+
     def __str__(self):
         return self.key
 
-    def is_expired(self):
-        return self.expires_at <= timezone.now()
+    class Meta:
+        db_table = 'custom_token'
+        verbose_name = 'Токен'
+        verbose_name_plural = 'Токены'
