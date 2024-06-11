@@ -52,7 +52,7 @@ DJANGO_APPS = [
 
 PROJECT_APPS = [
     'users_api',
-    'posts_api',
+    # 'posts_api',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS
@@ -120,7 +120,6 @@ DATABASES = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'users_api.authentication.CustomTokenAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
     ],
 }
 
@@ -173,3 +172,4 @@ MEDIA_URL = "media/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
