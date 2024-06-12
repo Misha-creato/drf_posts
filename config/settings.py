@@ -173,3 +173,21 @@ MEDIA_URL = "media/"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'my_console': {
+            'level': 'DEBUG',
+            'class': 'utils.custom_handler.MyConsoleHandler',
+        },
+    },
+    'loggers': {
+        'custom_handler': {
+            'handlers': ['my_console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
