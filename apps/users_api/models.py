@@ -13,6 +13,7 @@ from django.contrib.auth.models import (
 )
 from django.utils import timezone
 
+
 AVATAR_SIZE_WIDTH = 100
 AVATAR_SIZE_HEIGHT = 100
 
@@ -141,7 +142,7 @@ class CustomToken(models.Model):
         return self.expires_at <= timezone.now()
 
     def __str__(self):
-        return self.key
+        return self.user.email
 
     class Meta:
         db_table = 'custom_token'
