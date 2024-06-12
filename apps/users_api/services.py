@@ -1,9 +1,6 @@
-import logging
 from typing import Any
 
 from django.contrib.auth import authenticate
-
-from rest_framework import status
 
 from users_api.models import (
     CustomUser,
@@ -14,54 +11,44 @@ from users_api.serializers import (
     CustomUserSerializer,
 )
 
-
-logger = logging.getLogger(__name__)
-
-
-def get_log_user_data(user_data: dict) -> dict:
-    data = user_data.copy()
-    keys = [
-        'password',
-        'confirm_password',
-        'new_password',
-    ]
-    for key in keys:
-        data.pop(key, None)
-    return data
+from utils.custom_handler import logger
+from utils.log_data import get_log_user_data
+from utils.response_patterns import generate_response
 
 
 def create_user(request: Any) -> (int, dict):
+    data = request.data
     serializer = RegisterSerializer(
-        data=request.data,
+        data=data,
     )
-    if not serializer.is_valid():
-        return status.HTTP_400_BAD_REQUEST, {
-            'message': 'Error',
-            'data': serializer.errors,
-        }
-    validated_data = serializer.validated_data
-    email = validated_data['email']
     user_data = get_log_user_data(
-        user_data=validated_data,
+        user_data=data.dict(),
     )
     logger.info(f'Создание пользователя {user_data}')
+    if not serializer.is_valid():
+        logger.error(f'Невалидные данные для создания '
+                     f'пользователя {user_data}: {serializer.errors}')
+        return generate_response(
+            status_code=400,
+        )
+
+    validated_data = serializer.validated_data
     try:
         user = CustomUser.objects.create_user(
-            email=email,
+            email=validated_data['email'],
             password=validated_data['password'],
         )
     except Exception as exc:
         logger.error(f'Возникла ошибка при попытке создать '
                      f'пользователя {user_data}', exc_info=True)
-        return status.HTTP_500_INTERNAL_SERVER_ERROR, {
-            'message': 'Fail',
-            'data': user_data,
-        }
+        return generate_response(
+            status_code=500,
+        )
+
     logger.info(f'Пользователь {user_data} успешно создан')
-    return status.HTTP_201_CREATED, {
-        'message': 'Success',
-        'data': user_data,
-    }
+    return generate_response(
+        status_code=200,
+    )
 
 
 def authenticate_user(request: Any) -> (int, dict):
@@ -74,64 +61,66 @@ def authenticate_user(request: Any) -> (int, dict):
     )
     if user is None:
         logger.error(f'Невалидные данные пользователя {email}')
-        return status.HTTP_401_UNAUTHORIZED, {
-            'message': 'Fail',
-            'data': 'Неправильный адрес электронной почты или пароль',
-        }
+        return generate_response(
+            status_code=401,
+        )
 
     try:
-        token, created = CustomToken.objects.get_or_create(user=user)
+        token, _ = CustomToken.objects.get_or_create(user=user)
     except Exception as exc:
         logger.error(f'Ошибка при попытке получить токен пользователя {email}', exc_info=True)
-        return status.HTTP_500_INTERNAL_SERVER_ERROR, {
-            'message': 'Error',
-            'data': 'Возникла ошибка',
-        }
+        return generate_response(
+            status_code=500,
+        )
 
     if token is None:
         logger.error(f'Токен пользователя {email} не найден')
-        return status.HTTP_404_NOT_FOUND, {
-            'message': 'Fail',
-            'data': 'Возникла ошибка',
-        }
+        return generate_response(
+            status_code=404,
+        )
 
     key = token.key
     data = {
         'token': key,
-        'email': email,
     }
     logger.info(f'Токен {key} пользователя {email} получен')
-    return status.HTTP_200_OK, {
-        'message': 'Success',
-        'data': data,
-    }
+    return generate_response(
+        status_code=200,
+        data=data,
+    )
 
 
 def get_user(request: Any) -> (int, dict):
     user = request.user
+    logger.info(f'Получение данных пользователя {user}')
     serializer = CustomUserSerializer(user)
-    return status.HTTP_200_OK, {
-        'message': 'Success',
-        'data': serializer.data
-    }
+    data = serializer.data
+    logger.info(f'Данные пользователя {user} успешно получены: {data}')
+    return generate_response(
+        status_code=200,
+        data=data,
+    )
 
 
 def update_user(request: Any) -> (int, dict):
     user = request.user
-    serializer = CustomUserSerializer(
-        user,
-        data=request.data,
-    )
-    if not serializer.is_valid():
-        return status.HTTP_400_BAD_REQUEST, {
-            'message': 'Error',
-            'data': serializer.errors,
-        }
-    validated_data = serializer.validated_data
+    data = request.data
     user_data = get_log_user_data(
-        user_data=validated_data,
+        user_data=data.dict(),
     )
     logger.info(f'Обновление данных пользователя {user}: {user_data}')
+    serializer = CustomUserSerializer(
+        user,
+        data=data,
+    )
+    if not serializer.is_valid():
+        logger.error(f'Невалидные данные для обновления '
+                     f'пользователя {user} {user_data}: {serializer.errors}')
+        return generate_response(
+            status_code=400,
+        )
+
+    validated_data = serializer.validated_data
     for key, value in validated_data.items():
         if key == 'password':
             user.set_password(value)
@@ -142,33 +131,32 @@ def update_user(request: Any) -> (int, dict):
     except Exception as exc:
         logger.error(f'Возникла ошибка при попытке обновить '
                      f'данные пользователя {user}: {user_data}', exc_info=True)
-        return status.HTTP_500_INTERNAL_SERVER_ERROR, {
-            'message': 'Error',
-            'data': 'Возникла ошибка',
-        }
+        return generate_response(
+            status_code=500,
+        )
 
+    data = serializer.data
     logger.info(f'Обновление данных пользователя {user}: {user_data} прошло успешно')
-    return status.HTTP_200_OK, {
-        'message': 'Success',
-        'data': user_data,
-    }
+    return generate_response(
+        status_code=200,
+        data=data,
+    )
 
 
 def delete_user(request: Any) -> (int, dict):
     user = request.user
-    logger.info(f'Удаление пользователя {user}')
+    email = user.email
+    logger.info(f'Удаление пользователя {email}')
     try:
         user.delete()
     except Exception as exc:
         logger.error(f'Возникла ошибка при удалении '
-                     f'пользователя {user}', exc_info=True)
-        return status.HTTP_500_INTERNAL_SERVER_ERROR, {
-            'message': 'Error',
-            'data': 'Возникла ошибка',
-        }
+                     f'пользователя {email}', exc_info=True)
+        return generate_response(
+            status_code=500,
+        )
 
-    logger.info(f'Пользователь успешно удален')
-    return status.HTTP_204_NO_CONTENT, {
-        'message': 'Success',
-        'data': 'Пользователь успешно удален',
-    }
+    logger.info(f'Пользователь {email} успешно удален')
+    return generate_response(
+        status_code=200,
+    )
