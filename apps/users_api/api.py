@@ -10,11 +10,14 @@ from users_api.services import (
     authenticate_user,
     create_user,
     update_user,
-    get_user, delete_user,
+    get_user,
+    delete_user,
 )
 
 
 class RegisterView(APIView):
+    authentication_classes = []
+
     def post(self, request, *args, **kwargs):
         status_code, data = create_user(
             request=request,
@@ -26,6 +29,8 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    authentication_classes = []
+
     def post(self, request, *args, **kwargs):
         status_code, data = authenticate_user(
             request=request,
@@ -66,3 +71,8 @@ class CustomUserView(APIView):
             data,
             status=status_code,
         )
+
+
+class PasswordResetView(APIView):
+    def post(self, url_hash, *args, **kwargs):
+        pass
