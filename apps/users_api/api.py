@@ -16,27 +16,23 @@ from users_api.services import (
 
 
 class RegisterView(APIView):
-    authentication_classes = []
-
     def post(self, request, *args, **kwargs):
         status_code, data = create_user(
             request=request,
         )
         return Response(
-            data,
+            data=data,
             status=status_code,
         )
 
 
-class LoginView(APIView):
-    authentication_classes = []
-
+class AuthView(APIView):
     def post(self, request, *args, **kwargs):
         status_code, data = authenticate_user(
             request=request,
         )
         return Response(
-            data,
+            data=data,
             status=status_code,
         )
 
@@ -50,7 +46,7 @@ class CustomUserView(APIView):
             request=request,
         )
         return Response(
-            data,
+            data=data,
             status=status_code,
         )
 
@@ -59,7 +55,7 @@ class CustomUserView(APIView):
             request=request,
         )
         return Response(
-            data,
+            data=data,
             status=status_code,
         )
 
@@ -68,7 +64,7 @@ class CustomUserView(APIView):
             request=request,
         )
         return Response(
-            data,
+            data=data,
             status=status_code,
         )
 
