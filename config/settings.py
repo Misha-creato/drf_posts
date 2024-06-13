@@ -48,10 +48,12 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'solo',
 ]
 
 PROJECT_APPS = [
     'users_api',
+    'notifications',
     # 'posts_api',
 ]
 
@@ -180,11 +182,11 @@ LOGGING = {
     'handlers': {
         'my_console': {
             'level': 'DEBUG',
-            'class': 'utils.custom_handler.MyConsoleHandler',
+            'class': 'utils.log_settings.MyConsoleHandler',
         },
     },
     'loggers': {
-        'custom_handler': {
+        '': {
             'handlers': ['my_console'],
             'level': 'DEBUG',
             'propagate': False,
