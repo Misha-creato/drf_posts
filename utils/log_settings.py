@@ -5,7 +5,9 @@ from colorama import (
     Style,
 )
 
+
 init(autoreset=True)
+
 
 LEVEL_COLORS = {
     logging.DEBUG: Fore.CYAN,
