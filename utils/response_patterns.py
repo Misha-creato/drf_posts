@@ -11,7 +11,7 @@ def generate_response(status_code: int, data: dict | None = None) -> (int, dict)
     return (
         status_code,
         {
-            'message': status_messages.get(status_code),
+            'message': status_messages.get(status_code, 'Неизвестный статус код'),
             'data': data if data else {}
         }
     )
