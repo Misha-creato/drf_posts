@@ -33,10 +33,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         new_password = attrs.get('new_password')
         password = attrs.get('password')
         if bool(new_password) != bool(password):
-            raise serializers.ValidationError('Для смены пароля нужно ввести старый и новый пароль')
+            raise serializers.ValidationError(
+                'Для смены пароля нужно ввести старый и новый пароль'
+            )
         if new_password and password:
             if not self.instance.check_password(password):
-                raise serializers.ValidationError("Старый пароль неверный")
+                raise serializers.ValidationError(
+                    "Старый пароль неверный"
+                )
             attrs['password'] = attrs.pop('new_password')
         return attrs
 
@@ -56,5 +60,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
-            raise serializers.ValidationError("Пароли не совпадают")
+            raise serializers.ValidationError(
+                "Пароли не совпадают"
+            )
         return attrs
