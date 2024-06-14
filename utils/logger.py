@@ -31,7 +31,9 @@ class ColorFormatter(logging.Formatter):
         levelname = record.levelname
         if levelname in self.COLOR_CODES:
             levelname_color = f"{self.COLOR_CODES[levelname]}{levelname}{Style.RESET_ALL}"
+            name_color = f"{self.COLOR_CODES[levelname]}{record.name}{Style.RESET_ALL}"
             record.levelname = levelname_color
+            record.name = name_color
         return super().format(record)
 
 
