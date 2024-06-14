@@ -17,4 +17,6 @@ class EmailTemplateAdmin(admin.ModelAdmin):
     ]
 
 
-admin.site.register(EmailConfiguration, SingletonModelAdmin)
+@admin.register(EmailConfiguration)
+class EmailConfigurationAdmin(SingletonModelAdmin):
+    pass
