@@ -17,8 +17,9 @@ from users_api.services import (
 
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
+        data = request.data
         status_code, data = create_user(
-            request=request,
+            data=data,
         )
         return Response(
             data=data,
@@ -28,8 +29,9 @@ class RegisterView(APIView):
 
 class AuthView(APIView):
     def post(self, request, *args, **kwargs):
+        data = request.data
         status_code, data = authenticate_user(
-            request=request,
+            data=data,
         )
         return Response(
             data=data,
@@ -42,8 +44,9 @@ class CustomUserView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, *args, **kwargs):
+        user = request.user
         status_code, data = get_user(
-            request=request,
+            user=user,
         )
         return Response(
             data=data,
@@ -51,8 +54,11 @@ class CustomUserView(APIView):
         )
 
     def patch(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
         status_code, data = update_user(
-            request=request,
+            user=user,
+            data=data,
         )
         return Response(
             data=data,
@@ -60,8 +66,9 @@ class CustomUserView(APIView):
         )
 
     def delete(self, request, *args, **kwargs):
+        user = request.user
         status_code, data = delete_user(
-            request=request,
+            user=user,
         )
         return Response(
             data=data,
@@ -69,6 +76,10 @@ class CustomUserView(APIView):
         )
 
 
-class PasswordResetView(APIView):
-    def post(self, url_hash, *args, **kwargs):
+class ConfirmEmailView(APIView):
+    def get(self, url_hash, *args, **kwargs):
         pass
+
+# class PasswordResetView(APIView):
+#     def post(self, url_hash, *args, **kwargs):
+#         pass
