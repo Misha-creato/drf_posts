@@ -3,6 +3,7 @@ from users_api.api import (
     RegisterView,
     AuthView,
     CustomUserView,
+    ConfirmEmailView,
 )
 
 
@@ -16,6 +17,11 @@ urlpatterns = [
         'auth/',
         AuthView.as_view(),
         name='auth',
+    ),
+    path(
+        'confirm/email/<str:url_hash>',
+        ConfirmEmailView.as_view(),
+        name='confirm_email',
     ),
     path(
         '',
