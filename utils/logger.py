@@ -42,7 +42,7 @@ def get_logger(name: str) -> logging.Logger:
     console_handler = logging.StreamHandler()
     logger.setLevel(logging.DEBUG)
     formatter = ColorFormatter(
-        f'%(asctime)s %(levelname)s %(message)s %(name)s %(funcName)s '
+        '%(asctime)s %(levelname)s %(message)s %(name)s %(funcName)s '
     )
     console_handler.setFormatter(formatter)
     logger.handlers = [console_handler]
