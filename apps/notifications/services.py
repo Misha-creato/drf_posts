@@ -13,7 +13,7 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-class SendMails:
+class Email:
     email_host_user = EMAIL_HOST_USER
 
     def __init__(self, email_type: str, mail_data: dict, recipient: CustomUser):
@@ -21,7 +21,7 @@ class SendMails:
         self.mail_data = mail_data
         self.recipient = recipient
 
-    def get_email_template(self):
+    def _get_email_template(self):
         logger.info(
             msg=f'Поиск шаблона для письма {self.email_type}',
         )
@@ -35,7 +35,8 @@ class SendMails:
             return None
         return mail
 
-    def get_send_email_status(self) -> bool:
+    @property
+    def get_send_email_settings(self) -> EmailConfiguration | None:
         logger.info(
             msg='Получение настроек email',
         )
@@ -46,24 +47,24 @@ class SendMails:
                 msg='Ошибка при получении настроек email',
                 exc_info=True,
             )
-            return False
+            return None
         logger.info(
             msg='Настройки email получены',
         )
-        return configs.send_emails
+        return configs
 
-    def formate_email_text(self) -> dict:
+    def formate_email_text(self) -> (int, dict):
         logger.info(
             msg=f'Формирование текста для письма {self.email_type} \
             с данными {self.mail_data} пользователю {self.recipient}'
         )
 
-        mail = self.get_email_template()
+        mail = self._get_email_template()
         if mail is None:
             logger.error(
                 msg=f'Шаблон письма {self.email_type} не найден',
             )
-            return {}
+            return 501, {}
 
         logger.info(
             msg=f'Шаблон письма {self.email_type} найден',
@@ -78,30 +79,31 @@ class SendMails:
                 с данными {self.mail_data} пользователю {self.recipient}',
                 exc_info=True,
             )
-            return {}
+            return 500, {}
 
         logger.info(
             msg=f'Текст для письма {mail} успешно сформирован',
         )
-        return {
+        return 200, {
             'subject': subject,
             'message': message,
         }
 
-    def send_mail_to_user(self):
-        if not self.get_send_email_status():
+    def send(self):
+        email_settings = self.get_send_email_settings
+        if not email_settings or not email_settings.send_emails:
             logger.warning(
                 msg='Отправка писем отключена',
             )
             return 403
 
-        email_text = self.formate_email_text()
-        if not email_text:
+        status_code, email_text = self.formate_email_text()
+        if status_code != 200:
             logger.error(
                 msg=f'Не удалось сформировать текст для письма {self.email_type} '
                     f'\ пользователю {self.recipient}'
             )
-            return 400
+            return status_code
 
         subject = email_text["subject"]
         logger.info(
