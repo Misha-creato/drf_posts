@@ -7,19 +7,24 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from users_api.services import (
-    authenticate_user,
-    create_user,
-    update_user,
-    get_user,
-    delete_user,
+    auth,
+    register,
+    update,
+    detail,
+    retrieve,
+    confirm,
+    reset_request,
+    reset,
 )
 
 
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
-        status_code, data = create_user(
+        abs_url_func = request.build_absolute_uri
+        status_code, data = register(
             data=data,
+            abs_url_func=abs_url_func,
         )
         return Response(
             data=data,
@@ -30,7 +35,7 @@ class RegisterView(APIView):
 class AuthView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
-        status_code, data = authenticate_user(
+        status_code, data = auth(
             data=data,
         )
         return Response(
@@ -45,7 +50,7 @@ class CustomUserView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        status_code, data = get_user(
+        status_code, data = detail(
             user=user,
         )
         return Response(
@@ -56,7 +61,7 @@ class CustomUserView(APIView):
     def patch(self, request, *args, **kwargs):
         user = request.user
         data = request.data
-        status_code, data = update_user(
+        status_code, data = update(
             user=user,
             data=data,
         )
@@ -67,7 +72,7 @@ class CustomUserView(APIView):
 
     def delete(self, request, *args, **kwargs):
         user = request.user
-        status_code, data = delete_user(
+        status_code, data = retrieve(
             user=user,
         )
         return Response(
@@ -77,9 +82,38 @@ class CustomUserView(APIView):
 
 
 class ConfirmEmailView(APIView):
-    def get(self, url_hash, *args, **kwargs):
-        pass
+    def get(self, request, url_hash, *args, **kwargs):
+        status_code, data = confirm(
+            url_hash=url_hash,
+        )
+        return Response(
+            data=data,
+            status=status_code,
+        )
 
-# class PasswordResetView(APIView):
-#     def post(self, url_hash, *args, **kwargs):
-#         pass
+
+class PasswordResetRequestView(APIView):
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        abs_url_func = request.build_absolute_uri
+        status_code, data = reset_request(
+            data=data,
+            abs_url_func = abs_url_func,
+        )
+        return Response(
+            data=data,
+            status=status_code,
+        )
+
+
+class PasswordResetView(APIView):
+    def post(self, request, url_hash, *args, **kwargs):
+        data = request.data
+        status_code, data = reset(
+            url_hash=url_hash,
+            data=data,
+        )
+        return Response(
+            data=data,
+            status=status_code,
+        )
