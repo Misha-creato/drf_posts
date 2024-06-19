@@ -54,7 +54,7 @@ DJANGO_APPS = [
 PROJECT_APPS = [
     'users_api',
     'notifications',
-    # 'posts_api',
+    'posts_api',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS
@@ -122,6 +122,9 @@ DATABASES = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'users_api.authentication.CustomTokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
     ],
 }
 
