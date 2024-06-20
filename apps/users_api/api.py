@@ -11,20 +11,20 @@ from users_api.services import (
     register,
     update,
     detail,
-    retrieve,
-    confirm,
-    reset_request,
-    reset,
+    confirm_email,
+    password_restore_request,
+    password_restore,
+    remove,
 )
 
 
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
-        abs_url_func = request.build_absolute_uri
+        get_url_func = request.build_absolute_uri
         status_code, data = register(
             data=data,
-            abs_url_func=abs_url_func,
+            get_url_func=get_url_func,
         )
         return Response(
             data=data,
@@ -72,7 +72,7 @@ class CustomUserView(APIView):
 
     def delete(self, request, *args, **kwargs):
         user = request.user
-        status_code, data = retrieve(
+        status_code, data = remove(
             user=user,
         )
         return Response(
@@ -83,7 +83,7 @@ class CustomUserView(APIView):
 
 class ConfirmEmailView(APIView):
     def get(self, request, url_hash, *args, **kwargs):
-        status_code, data = confirm(
+        status_code, data = confirm_email(
             url_hash=url_hash,
         )
         return Response(
@@ -92,13 +92,13 @@ class ConfirmEmailView(APIView):
         )
 
 
-class PasswordResetRequestView(APIView):
+class PasswordRestoreRequestView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
-        abs_url_func = request.build_absolute_uri
-        status_code, data = reset_request(
+        get_url_func = request.build_absolute_uri
+        status_code, data = password_restore_request(
             data=data,
-            abs_url_func = abs_url_func,
+            get_url_func=get_url_func,
         )
         return Response(
             data=data,
@@ -106,10 +106,10 @@ class PasswordResetRequestView(APIView):
         )
 
 
-class PasswordResetView(APIView):
+class PasswordRestoreView(APIView):
     def post(self, request, url_hash, *args, **kwargs):
         data = request.data
-        status_code, data = reset(
+        status_code, data = password_restore(
             url_hash=url_hash,
             data=data,
         )
