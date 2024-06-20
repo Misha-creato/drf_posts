@@ -9,7 +9,6 @@ from utils.response_patterns import generate_response
 
 from utils.logger import get_logger
 
-
 logger = get_logger(__name__)
 
 
@@ -53,7 +52,7 @@ def add(user: CustomUser, data: QueryDict) -> (int, dict):
     )
     if not serializer.is_valid():
         logger.error(
-            msg=f'Невалидные данные для создания поста \
+            msg=f'Невалидные данные для создания поста\
             пользователем {user}: {serializer.errors}',
         )
         return generate_response(
@@ -62,12 +61,13 @@ def add(user: CustomUser, data: QueryDict) -> (int, dict):
 
     validated_data = serializer.validated_data
     try:
-        post = Post.objects.create(author=user,
-                                   **validated_data,
-                                   )
+        post = Post.objects.create(
+            author=user,
+            **validated_data,
+        )
     except Exception as exc:
         logger.error(
-            msg=f'Возникла ошибка при попытке создании поста \
+            msg=f'Возникла ошибка при попытке создании поста\
                     пользователем {user}: {validated_data}',
             exc_info=True,
         )
