@@ -1,4 +1,6 @@
+import inspect
 import logging
+
 from colorama import (
     init,
     Fore,
@@ -28,6 +30,21 @@ class ColorFormatter(logging.Formatter):
     }
 
     def format(self, record):
+        stack = inspect.stack()
+
+        function_hierarchy = []
+        record_file = record.pathname
+
+        for frame in stack[1:]:
+            if frame.filename == record_file:
+                function_name = frame.function
+                function_hierarchy.append(function_name)
+
+        if len(function_hierarchy) > 1:
+            record.funcName = "->".join(function_hierarchy)
+        else:
+            record.funcName = function_hierarchy[-1] if function_hierarchy else record.funcName
+
         levelname = record.levelname
         if levelname in self.COLOR_CODES:
             levelname_color = f"{self.COLOR_CODES[levelname]}{levelname}{Style.RESET_ALL}"
@@ -42,7 +59,7 @@ def get_logger(name: str) -> logging.Logger:
     console_handler = logging.StreamHandler()
     logger.setLevel(logging.DEBUG)
     formatter = ColorFormatter(
-        '%(asctime)s %(levelname)s %(message)s %(name)s %(funcName)s '
+        '%(asctime)s %(levelname)s %(message)s %(name)s %(funcName)s'
     )
     console_handler.setFormatter(formatter)
     logger.handlers = [console_handler]
