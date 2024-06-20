@@ -9,18 +9,16 @@ from unittest.mock import patch
 
 from users_api.models import (
     CustomUser,
-    CustomToken,
 )
 from users_api.services import (
     auth,
     register,
     detail,
     update,
-    retrieve,
-    confirm,
-    reset,
-    reset_request,
-    get_user_by,
+    remove,
+    confirm_email,
+    password_restore,
+    password_restore_request,
 )
 
 
@@ -37,7 +35,6 @@ class ServicesTest(APITestCase):
             password='test123',
             url_hash='fc0ecf9c-4c37-4bb2-8c22-938a1dc65da4',
         )
-        cls.token = CustomToken.objects.create(user=cls.user)
 
     @patch('users_api.services.send_email_by_type')
     def test_register(self, mock_send_email_by_type):
@@ -52,7 +49,7 @@ class ServicesTest(APITestCase):
         )
 
         request = self.client.post('/').wsgi_request
-        abs_url_func = request.build_absolute_uri
+        get_url_func = request.build_absolute_uri
 
         for code, name in fixtures:
             fixture = f'{code}_{name}'
@@ -62,7 +59,7 @@ class ServicesTest(APITestCase):
 
             status_code, response_data = register(
                 data=data,
-                abs_url_func=abs_url_func,
+                get_url_func=get_url_func,
             )
 
             self.assertEqual(status_code, code, msg=fixture)
@@ -126,14 +123,14 @@ class ServicesTest(APITestCase):
 
             self.assertEqual(status_code, code, msg=fixture)
 
-    def test_retrieve(self):
-        status_code, response_data = retrieve(
+    def test_remove(self):
+        status_code, response_data = remove(
             user=self.user,
         )
 
         self.assertEqual(status_code, 200)
 
-    def test_confirm(self):
+    def test_confirm_email(self):
         path = f'{self.path}/confirm'
         fixtures = (
             (200, 'valid'),
@@ -146,13 +143,13 @@ class ServicesTest(APITestCase):
             with open(f'{path}/{fixture}_request.json') as file:
                 url_hash = json.load(file)
 
-            status_code, response_data = confirm(
+            status_code, response_data = confirm_email(
                 url_hash=url_hash,
             )
 
             self.assertEqual(status_code, code, msg=fixture)
 
-    def test_reset(self):
+    def test_password_restore(self):
         path = f'{self.path}/reset'
         fixtures = (
             (400, 'wrong_password'),
@@ -167,7 +164,7 @@ class ServicesTest(APITestCase):
                 data = json.load(file)
 
             url_hash = data.pop('url_hash')
-            status_code, response_data = reset(
+            status_code, response_data = password_restore(
                 url_hash=url_hash,
                 data=data,
             )
@@ -175,7 +172,7 @@ class ServicesTest(APITestCase):
             self.assertEqual(status_code, code, msg=fixture)
 
     @patch('users_api.services.send_email_by_type')
-    def test_reset_request(self, mock_send_email_by_type):
+    def test_password_restore_request(self, mock_send_email_by_type):
         mock_send_email_by_type.return_value = 200
         path = f'{self.path}/reset_request'
         fixtures = (
@@ -186,7 +183,7 @@ class ServicesTest(APITestCase):
         )
 
         request = self.client.post('/').wsgi_request
-        abs_url_func = request.build_absolute_uri
+        get_url_func = request.build_absolute_uri
 
         for code, name in fixtures:
             fixture = f'{code}_{name}'
@@ -194,29 +191,10 @@ class ServicesTest(APITestCase):
             with open(f'{path}/{fixture}_request.json') as file:
                 data = json.load(file)
 
-            status_code, response_data = reset_request(
+            status_code, response_data = password_restore_request(
                 data=data,
-                abs_url_func=abs_url_func,
+                get_url_func=get_url_func,
             )
 
             self.assertEqual(status_code, code, msg=fixture)
 
-    def test_get_user_by(self):
-        path = f'{self.path}/get_user_by'
-        fixtures = (
-            (200, 'valid'),
-            (400, 'not_found'),
-            (500, 'invalid'),
-        )
-
-        for code, name in fixtures:
-            fixture = f'{code}_{name}'
-
-            with open(f'{path}/{fixture}_request.json') as file:
-                data = json.load(file)
-
-            status_code, response_data = get_user_by(
-                **data
-            )
-
-            self.assertEqual(status_code, code, msg=fixture)
