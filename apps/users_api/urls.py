@@ -1,11 +1,17 @@
 from django.urls import path
+
 from users_api.api import (
     RegisterView,
     AuthView,
     CustomUserView,
     ConfirmEmailView,
-    PasswordResetRequestView,
-    PasswordResetView,
+    PasswordRestoreRequestView,
+    PasswordRestoreView,
+)
+
+from utils.constants import (
+    CONFIRM_EMAIL,
+    PASSWORD_RESTORE,
 )
 
 
@@ -23,17 +29,17 @@ urlpatterns = [
     path(
         'confirm/email/<str:url_hash>/',
         ConfirmEmailView.as_view(),
-        name='confirm_email',
+        name=CONFIRM_EMAIL,
     ),
     path(
-        'password/reset/request/',
-        PasswordResetRequestView.as_view(),
-        name='password_reset_request',
+        'password/restore/request/',
+        PasswordRestoreRequestView.as_view(),
+        name='password_restore_request',
     ),
     path(
-        'password/reset/<str:url_hash>/',
-        PasswordResetView.as_view(),
-        name='password_reset',
+        'password/restore/<str:url_hash>/',
+        PasswordRestoreView.as_view(),
+        name=PASSWORD_RESTORE,
     ),
     path(
         '',
