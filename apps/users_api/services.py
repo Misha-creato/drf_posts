@@ -14,6 +14,10 @@ from users_api.serializers import (
     RegisterSerializer,
     CustomUserSerializer,
 )
+from utils.constants import (
+    CONFIRM_EMAIL,
+    PASSWORD_RESTORE,
+)
 
 from utils.logger import (
     get_logger,
@@ -25,7 +29,7 @@ from utils.response_patterns import generate_response
 logger = get_logger(__name__)
 
 
-def register(data: QueryDict, abs_url_func: Callable) -> (int, dict):
+def register(data: QueryDict, get_url_func: Callable) -> (int, dict):
     user_data = get_log_user_data(
         user_data=dict(data),
     )
@@ -38,7 +42,8 @@ def register(data: QueryDict, abs_url_func: Callable) -> (int, dict):
     )
     if not serializer.is_valid():
         logger.error(
-            msg=f'Невалидные данные для создания пользователя {user_data}: {serializer.errors}',
+            msg=f'Невалидные данные для создания \
+            пользователя {user_data}: {serializer.errors}',
         )
         return generate_response(
             status_code=400,
@@ -65,8 +70,8 @@ def register(data: QueryDict, abs_url_func: Callable) -> (int, dict):
 
     status = send_email_by_type(
         user=user,
-        abs_url_func=abs_url_func,
-        email_type='confirm_email',
+        get_url_func=get_url_func,
+        email_type=CONFIRM_EMAIL,
     )
     if status != 200:
         return generate_response(
@@ -152,7 +157,8 @@ def update(user: CustomUser, data: QueryDict) -> (int, dict):
     )
     if not serializer.is_valid():
         logger.error(
-            msg=f'Невалидные данные для обновления пользователя {user} {user_data}: {serializer.errors}',
+            msg=f'Невалидные данные для обновления\
+            пользователя {user} {user_data}: {serializer.errors}',
         )
         return generate_response(
             status_code=400,
@@ -168,7 +174,8 @@ def update(user: CustomUser, data: QueryDict) -> (int, dict):
         user.save()
     except Exception as exc:
         logger.error(
-            msg=f'Возникла ошибка при попытке обновить данные пользователя {user}: {user_data}',
+            msg=f'Возникла ошибка при попытке обновить\
+            данные пользователя {user}: {user_data}',
             exc_info=True,
         )
         return generate_response(
@@ -185,7 +192,7 @@ def update(user: CustomUser, data: QueryDict) -> (int, dict):
     )
 
 
-def retrieve(user: CustomUser) -> (int, dict):
+def remove(user: CustomUser) -> (int, dict):
     email = user.email
     logger.info(
         msg=f'Удаление пользователя {email}',
@@ -209,9 +216,10 @@ def retrieve(user: CustomUser) -> (int, dict):
     )
 
 
-def send_email_by_type(user: CustomUser, abs_url_func: Callable, email_type: str) -> int:
+def send_email_by_type(user: CustomUser, get_url_func: Callable, email_type: str) -> int:
     logger.info(
-        msg=f'Получение данных для формирования текста письма {email_type} пользователю {user}',
+        msg=f'Получение данных для формирования текста\
+        письма {email_type} пользователю {user}',
     )
 
     url_hash = str(uuid.uuid4())
@@ -221,13 +229,13 @@ def send_email_by_type(user: CustomUser, abs_url_func: Callable, email_type: str
         user.save()
     except Exception as exc:
         logger.error(
-            msg=f'Не удалось получить данные для формирования текста письма {email_type} \
+            msg=f'Не удалось получить данные для формирования текста письма {email_type}\
                         пользователю {user}',
             exc_info=True,
         )
         return 500
 
-    url = abs_url_func(reverse(email_type, args=(user.url_hash,)))
+    url = get_url_func(reverse(email_type, args=(user.url_hash,)))
     mail_data = {
         'url': url,
     }
@@ -246,44 +254,31 @@ def send_email_by_type(user: CustomUser, abs_url_func: Callable, email_type: str
     return status
 
 
-def get_user_by(**kwargs) -> (int, CustomUser | None):
-    logger.info(
-        msg=f'Поиск пользователя с {kwargs}',
-    )
-    try:
-        user = CustomUser.objects.filter(
-            **kwargs,
-        ).first()
-    except Exception as exc:
-        logger.error(
-            msg=f'Ошибка при поиске пользователя с {kwargs}',
-            exc_info=True,
-        )
-        return 500, None
-
-    if user is None:
-        logger.error(
-            msg=f'Пользователь с {kwargs} не найден',
-        )
-        return 400, None
-
-    logger.info(
-        msg=f'Пользователь {user} с {kwargs} найден',
-    )
-    return 200, user
-
-
-def confirm(url_hash: str) -> (int, dict):
+def confirm_email(url_hash: str) -> (int, dict):
     logger.info(
         msg=f'Подтверждение email пользователя с хэшем {url_hash}',
     )
 
-    status_code, user = get_user_by(
-        url_hash=url_hash,
-    )
-    if status_code != 200:
+    try:
+        user = CustomUser.objects.filter(
+            url_hash=url_hash,
+        ).first()
+    except Exception as exc:
+        logger.error(
+            msg=f'Ошибка при поиске пользователя с хэшем\
+{url_hash} для подтверждения email',
+            exc_info=True,
+        )
         return generate_response(
-            status_code=status_code,
+            status_code=500,
+        )
+
+    if user is None:
+        logger.error(
+            msg=f'Пользователь с хэшем {url_hash} для подтверждения email не найден',
+        )
+        return generate_response(
+            status_code=400,
         )
 
     user.email_confirmed = True
@@ -307,17 +302,30 @@ def confirm(url_hash: str) -> (int, dict):
     )
 
 
-def reset(url_hash: str, data: QueryDict) -> (int, dict):
+def password_restore(url_hash: str, data: QueryDict) -> (int, dict):
     logger.info(
         msg=f'Сброс пароля пользователя с хэшем {url_hash}',
     )
 
-    status_code, user = get_user_by(
-        url_hash=url_hash,
-    )
-    if status_code != 200:
+    try:
+        user = CustomUser.objects.filter(
+            url_hash=url_hash,
+        ).first()
+    except Exception as exc:
+        logger.error(
+            msg=f'Ошибка при поиске пользователя с хэшем {url_hash} для сброса пароля',
+            exc_info=True,
+        )
         return generate_response(
-            status_code=status_code,
+            status_code=500,
+        )
+
+    if user is None:
+        logger.error(
+            msg=f'Пользователь с хэшем {url_hash} для сброса пароля не найден',
+        )
+        return generate_response(
+            status_code=400,
         )
 
     user_data = get_log_user_data(
@@ -332,7 +340,8 @@ def reset(url_hash: str, data: QueryDict) -> (int, dict):
     )
     if not serializer.is_valid():
         logger.error(
-            msg=f'Невалидные данные для сброса пароля пользователя {user} {user_data}: {serializer.errors}',
+            msg=f'Невалидные данные для сброса пароля\
+            пользователя {user} {user_data}: {serializer.errors}',
         )
         return generate_response(
             status_code=400,
@@ -345,7 +354,8 @@ def reset(url_hash: str, data: QueryDict) -> (int, dict):
         user.save()
     except Exception as exc:
         logger.error(
-            msg=f'Возникла ошибка при сбросe пароля пользователя {user} {user_data}: {serializer.errors}',
+            msg=f'Возникла ошибка при сбросe пароля\
+            пользователя {user} {user_data}: {serializer.errors}',
             exc_info=True,
         )
         return generate_response(
@@ -360,7 +370,7 @@ def reset(url_hash: str, data: QueryDict) -> (int, dict):
     )
 
 
-def reset_request(data: QueryDict, abs_url_func: Callable) -> (int, dict):
+def password_restore_request(data: QueryDict, get_url_func: Callable) -> (int, dict):
     email = data.get('email')
     logger.info(
         msg=f'Запрос на сброс пароля пользователя {email}',
@@ -371,24 +381,39 @@ def reset_request(data: QueryDict, abs_url_func: Callable) -> (int, dict):
     )
     if not serializer.is_valid():
         logger.error(
-            msg=f'Невалидные данные для запроса на сброс пароля пользователя {email}: {serializer.errors}',
+            msg=f'Невалидные данные для запроса на сброс пароля\
+            пользователя {email}: {serializer.errors}',
         )
         return generate_response(
             status_code=400,
         )
 
-    status_code, user = get_user_by(
-        email=email,
-    )
-    if status_code != 200:
+    try:
+        user = CustomUser.objects.filter(
+            email=email,
+        ).first()
+    except Exception as exc:
+        logger.error(
+            msg=f'Ошибка при поиске пользователя с email {email}\
+            для запроса на сброс пароля',
+            exc_info=True,
+        )
         return generate_response(
-            status_code=status_code,
+            status_code=500,
+        )
+
+    if user is None:
+        logger.error(
+            msg=f'Пользователь с email {email} для запроса на сброс пароля не найден',
+        )
+        return generate_response(
+            status_code=400,
         )
 
     status_code = send_email_by_type(
         user=user,
-        email_type='password_reset',
-        abs_url_func=abs_url_func,
+        email_type=PASSWORD_RESTORE,
+        get_url_func=get_url_func,
     )
 
     logger.info(
