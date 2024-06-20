@@ -1,4 +1,8 @@
+CONFIRM_EMAIL = 'confirm_email'
+PASSWORD_RESTORE = 'password_reset'
+
+
 EMAIL_TYPES = (
-    ('confirm_email', 'Подтверждение адреса электронной почты'),
-    ('password_reset', 'Восстановление пароля'),
+    (CONFIRM_EMAIL, 'Подтверждение адреса электронной почты'),
+    (PASSWORD_RESTORE, 'Восстановление пароля'),
 )
