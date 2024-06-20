@@ -1,0 +1,40 @@
+[
+  {
+    "model": "users_api.customuser",
+    "pk": 1,
+    "fields": {
+      "password": "test123",
+      "last_login": null,
+      "email": "test1@cc.com",
+      "avatar": "avatars/hagi_vagi_8Y53jFk.jpeg",
+      "thumbnail": "thumbnails/hagi_vagi_t7uxGvy.jpeg",
+      "is_superuser": false,
+      "is_staff": false,
+      "is_active": true,
+      "email_confirmed": false,
+      "url_hash": null,
+      "date_joined": "2024-06-11T11:13:21.878Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users_api.customuser",
+    "pk": 2,
+    "fields": {
+      "password": "test123",
+      "last_login": null,
+      "email": "test2@cc.com",
+      "avatar": "avatars/default.jpeg",
+      "thumbnail": "thumbnails/default.jpeg",
+      "is_superuser": false,
+      "is_staff": false,
+      "is_active": true,
+      "email_confirmed": false,
+      "url_hash": null,
+      "date_joined": "2024-06-14T13:08:09.654Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]
