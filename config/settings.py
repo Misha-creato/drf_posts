@@ -204,3 +204,10 @@ SITE_DOMAIN = os.environ.get(
 SITE_PROTOCOL = os.environ.get(
     'SITE_PROTOCOL', 'http'
 )
+
+# fixtures
+
+FIXTURE_DIRS = (
+    os.path.join(BASE_DIR, 'apps', 'notifications', 'tests', 'fixtures'),
+    os.path.join(BASE_DIR, 'apps', 'posts_api', 'tests', 'fixtures'),
+)
