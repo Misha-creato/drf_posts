@@ -131,10 +131,10 @@ class ServicesTest(APITestCase):
         self.assertEqual(status_code, 200)
 
     def test_confirm_email(self):
-        path = f'{self.path}/confirm'
+        path = f'{self.path}/confirm_email'
         fixtures = (
             (200, 'valid'),
-            (400, 'invalid'),
+            (404, 'invalid'),
         )
 
         for code, name in fixtures:
@@ -150,10 +150,10 @@ class ServicesTest(APITestCase):
             self.assertEqual(status_code, code, msg=fixture)
 
     def test_password_restore(self):
-        path = f'{self.path}/reset'
+        path = f'{self.path}/password_restore'
         fixtures = (
             (400, 'wrong_password'),
-            (400, 'invalid'),
+            (404, 'invalid'),
             (200, 'valid'),
         )
 
@@ -174,10 +174,10 @@ class ServicesTest(APITestCase):
     @patch('users_api.services.send_email_by_type')
     def test_password_restore_request(self, mock_send_email_by_type):
         mock_send_email_by_type.return_value = 200
-        path = f'{self.path}/reset_request'
+        path = f'{self.path}/password_restore_request'
         fixtures = (
             (200, 'valid'),
-            (400, 'wrong_email'),
+            (406, 'wrong_email'),
             (400, 'invalid_email'),
             (400, 'invalid'),
         )
