@@ -22,6 +22,13 @@ class Email:
         self.recipient = recipient
 
     def _get_email_template(self):
+        '''
+        Получение шаблона письма
+
+        Returns:
+            Шаблон письма или None
+        '''
+
         logger.info(
             msg=f'Поиск шаблона для письма {self.email_type}',
         )
@@ -36,7 +43,14 @@ class Email:
         return mail
 
     @property
-    def get_send_email_settings(self) -> EmailConfiguration | None:
+    def get_send_email_configs(self) -> EmailConfiguration | None:
+        '''
+        Получение настроек email
+
+        Returns:
+            Объет EmailConfiguration или None
+        '''
+
         logger.info(
             msg='Получение настроек email',
         )
@@ -54,9 +68,16 @@ class Email:
         return configs
 
     def formate_email_text(self) -> (int, dict):
+        '''
+        Форматирование текста для письма
+
+        Returns:
+            Кортеж из статуса и словаря данных
+        '''
+
         logger.info(
-            msg=f'Формирование текста для письма {self.email_type} \
-            с данными {self.mail_data} пользователю {self.recipient}'
+            msg=f'Формирование текста для письма {self.email_type} '
+                f'с данными {self.mail_data} пользователю {self.recipient}'
         )
 
         mail = self._get_email_template()
@@ -75,8 +96,8 @@ class Email:
             message = mail.message.format(**self.mail_data)
         except Exception as exc:
             logger.error(
-                msg=f'Возникла ошибка при форматировании текста для письма {mail} \
-                с данными {self.mail_data} пользователю {self.recipient}',
+                msg=f'Возникла ошибка при форматировании текста для письма {mail} '
+                    f'с данными {self.mail_data} пользователю {self.recipient}',
                 exc_info=True,
             )
             return 500, {}
@@ -89,8 +110,15 @@ class Email:
             'message': message,
         }
 
-    def send(self):
-        email_settings = self.get_send_email_settings
+    def send(self) -> int:
+        '''
+        Отправка письма
+
+        Returns:
+            Статус
+        '''
+
+        email_settings = self.get_send_email_configs
         if not email_settings or not email_settings.send_emails:
             logger.warning(
                 msg='Отправка писем отключена',
@@ -101,7 +129,7 @@ class Email:
         if status_code != 200:
             logger.error(
                 msg=f'Не удалось сформировать текст для письма {self.email_type} '
-                    f'\ пользователю {self.recipient}'
+                    f'пользователю {self.recipient}'
             )
             return status_code
 
@@ -118,8 +146,8 @@ class Email:
             )
         except Exception as exc:
             logger.error(
-                msg=f'Произошла ошибка при отправке письма {subject} \
-                пользователю {self.recipient}',
+                msg=f'Произошла ошибка при отправке письма {subject} '
+                    f'пользователю {self.recipient}',
                 exc_info=True,
             )
             return 500
