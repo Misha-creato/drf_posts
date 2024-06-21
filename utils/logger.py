@@ -41,7 +41,7 @@ class ColorFormatter(logging.Formatter):
                 function_hierarchy.append(function_name)
 
         if len(function_hierarchy) > 1:
-            record.funcName = "->".join(function_hierarchy)
+            record.funcName = " -> ".join(function_hierarchy)
         else:
             record.funcName = function_hierarchy[-1] if function_hierarchy else record.funcName
 
@@ -55,11 +55,21 @@ class ColorFormatter(logging.Formatter):
 
 
 def get_logger(name: str) -> logging.Logger:
+    '''
+    Получение логгера
+
+    Args:
+        name: название модуля
+
+    Returns:
+        Объект логгера
+    '''
+
     logger = logging.getLogger(name)
     console_handler = logging.StreamHandler()
     logger.setLevel(logging.DEBUG)
     formatter = ColorFormatter(
-        '%(asctime)s %(levelname)s %(message)s %(name)s %(funcName)s'
+        '%(asctime)s %(levelname)s %(message)s %(name)s.%(funcName)s'
     )
     console_handler.setFormatter(formatter)
     logger.handlers = [console_handler]
@@ -67,6 +77,16 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def get_log_user_data(user_data: dict) -> dict:
+    '''
+    Получение данных пользователя для логов
+
+    Args:
+        user_data: данные пользователя
+
+    Returns:
+        Словарь данных
+    '''
+
     data = user_data.copy()
     keys = [
         'password',
