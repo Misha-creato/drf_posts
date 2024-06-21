@@ -84,7 +84,25 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    def __make_thumbnail(self):
+    @property
+    def nickname(self) -> str:
+        '''
+        Никнейм пользователя
+
+        Returns:
+            Никнейм
+        '''
+
+        return self.email.split('@')[0]
+
+    def __make_thumbnail(self) -> None:
+        '''
+        Создание миниатюры аватара
+
+        Returns:
+            None
+        '''
+
         with Image.open(self.avatar) as img:
             if img.mode in ('RGBA', 'LA'):
                 img = img.convert('RGB')
@@ -135,10 +153,24 @@ class CustomToken(models.Model):
             self.expires_at = timezone.now() + timedelta(days=7)
         return super().save(*args, **kwargs)
 
-    def __generate_key(self):
+    def __generate_key(self) -> str:
+        '''
+        Генерация уникального ключа
+
+        Returns:
+            Ключ
+        '''
+
         return str(uuid.uuid4())
 
-    def is_expired(self):
+    def is_expired(self) -> bool:
+        '''
+        Проверка истечения ключа
+
+        Returns:
+            Флаг истечения ключа
+        '''
+
         return self.expires_at <= timezone.now()
 
     def __str__(self):
