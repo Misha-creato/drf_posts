@@ -45,6 +45,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class PasswordRestoreSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'email',
+        ]
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(
         max_length=128,
