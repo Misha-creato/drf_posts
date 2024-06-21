@@ -3,7 +3,7 @@ from django.urls import path
 from posts_api.api import (
     PostListView,
     PostDetailView,
-    # PostView,
+    PostUserView,
 )
 
 
@@ -14,13 +14,13 @@ urlpatterns = [
         name='post',
     ),
     path(
+        'author/<int:pk>/',
+        PostUserView.as_view(),
+        name='author_posts',
+    ),
+    path(
         '',
         PostListView.as_view(),
         name='posts',
     ),
-    # path(
-    #     '',
-    #     PostView.as_view(),
-    #     name='posts',
-    # ),
 ]
