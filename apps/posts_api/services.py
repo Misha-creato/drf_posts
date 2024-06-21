@@ -3,16 +3,24 @@ from django.http.request import QueryDict
 
 from posts_api.models import Post
 from posts_api.serializers import PostSerializer
+
 from users_api.models import CustomUser
 
 from utils.response_patterns import generate_response
-
 from utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
 
 def get_posts() -> (int, dict):
+    '''
+    Получение списка всех постов
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
     logger.info(
         msg='Получение списка всех постов',
     )
@@ -29,11 +37,10 @@ def get_posts() -> (int, dict):
             status_code=500,
         )
 
-    serializer = PostSerializer(
+    data = PostSerializer(
         instance=posts,
         many=True,
-    )
-    data = serializer.data
+    ).data
     logger.info(
         msg=f'Список всех постов получен: {data}'
     )
@@ -44,6 +51,17 @@ def get_posts() -> (int, dict):
 
 
 def add(user: CustomUser, data: QueryDict) -> (int, dict):
+    '''
+    Создание поста
+
+    Args:
+        user: пользователь
+        data: данные поста
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
     logger.info(
         msg=f'Создание поста пользователем {user}: {data}',
     )
@@ -84,6 +102,17 @@ def add(user: CustomUser, data: QueryDict) -> (int, dict):
 
 
 def get_post(slug: str, user: CustomUser) -> (int, Post | None):
+    '''
+    Получение поста по slug
+
+    Args:
+        slug: слаг
+        user: пользователь
+
+    Returns:
+        Кортеж из статуса и объекта Post
+    '''
+
     logger.info(
         msg=f'Поиск поста по слагу {slug} пользователем {user}',
     )
@@ -102,7 +131,7 @@ def get_post(slug: str, user: CustomUser) -> (int, Post | None):
         logger.error(
             msg=f'Пост со слагом {slug} не найден пользователем {user}',
         )
-        return 400, None
+        return 404, None
 
     logger.info(
         msg=f'Пост со слагом {slug} успешно найден пользователем {user}',
@@ -111,6 +140,17 @@ def get_post(slug: str, user: CustomUser) -> (int, Post | None):
 
 
 def detail(slug: str, user: CustomUser) -> (int, dict):
+    '''
+    Получение данных поста по slug
+
+    Args:
+        slug: слаг
+        user: пользователь
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
     logger.info(
         msg=f'Получение данных поста с слагом {slug} пользователем {user}',
     )
@@ -137,6 +177,18 @@ def detail(slug: str, user: CustomUser) -> (int, dict):
 
 
 def update(slug: str, user: CustomUser, data: QueryDict) -> (int, dict):
+    '''
+    Обновление поста по slug
+
+    Args:
+        slug: слаг
+        user: пользователь
+        data: данные поста
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
     logger.info(
         msg=f'Обновление поста по слагу {slug} пользователем {user} c данными: {data}'
     )
@@ -171,10 +223,14 @@ def update(slug: str, user: CustomUser, data: QueryDict) -> (int, dict):
         )
 
     validated_data = serializer.validated_data
-    for key, value in validated_data.items():
-        setattr(post, key, value)
+    # for key, value in validated_data.items():
+    #     setattr(post, key, value)
     try:
-        post.save()
+        serializer.update(
+            instance=post,
+            validated_data=validated_data,
+        )
+        # post.save()
     except Exception as exc:
         logger.error(
             msg=f'Возникла ошибка при попытке обновления поста {post} \
@@ -195,7 +251,18 @@ def update(slug: str, user: CustomUser, data: QueryDict) -> (int, dict):
     )
 
 
-def delete(slug: str, user: CustomUser) -> (int, dict):
+def remove(slug: str, user: CustomUser) -> (int, dict):
+    '''
+    Удаление поста по slug
+
+    Args:
+        slug: слаг
+        user: пользователь
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
     logger.info(
         msg=f'Удаление поста по слагу {slug} пользователем {user}'
     )
@@ -234,4 +301,69 @@ def delete(slug: str, user: CustomUser) -> (int, dict):
     )
     return generate_response(
         status_code=200
+    )
+
+
+def get_posts_by_pk(pk: int, user: CustomUser) -> (int, dict):
+    '''
+    Получение поста пользователя по pk
+
+    Args:
+        pk: идентификатор
+        user: пользователь
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
+    logger.info(
+        msg=f'Получение списка постов автора с pk {pk} пользователем {user}',
+    )
+    try:
+        author = CustomUser.objects.filter(
+            pk=pk,
+        ).first()
+    except Exception as exc:
+        logger.error(
+            msg=f'Возникла ошибка при проверке существования автора '
+                f'с pk {pk} пользователем {user}',
+            exc_info=True,
+        )
+        return generate_response(
+            status_code=500,
+        )
+
+    if author is None:
+        logger.error(
+            msg=f'Автор с pk {pk} не найден пользователем {user}',
+        )
+        return generate_response(
+            status_code=404,
+        )
+
+    try:
+        posts = Post.objects.filter(
+            Q(author=user) & Q(author__pk=pk) | Q(author__pk=pk) & Q(hidden=False)
+        )
+    except Exception as exc:
+        logger.info(
+            msg=f'Возникла ошибка при получении списка постов '
+                f'автора с pk {pk} пользователем {user}',
+            exc_info=True,
+        )
+        return generate_response(
+            status_code=500,
+        )
+
+    data = PostSerializer(
+        instance=posts,
+        many=True,
+    ).data
+
+    logger.info(
+        msg=f'Список постов автора с pk {pk} пользователем {user} получен: {data}',
+    )
+    return generate_response(
+        status_code=200,
+        data=data,
     )
