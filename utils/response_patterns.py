@@ -5,12 +5,24 @@ status_messages = {
     401: 'Ошибка авторизации',
     403: 'Доступ запрещен',
     404: 'Не найдено',
+    406: 'Недопустимые данные',
     500: 'Ошибка сервера',
     501: 'Не поддерживается',
 }
 
 
 def generate_response(status_code: int, data: dict | None = None) -> (int, dict):
+    '''
+    Генерация ответа
+
+    Args:
+        status_code: статус
+        data: данные
+
+    Returns:
+        Кортеж из статуса и словаря данных
+    '''
+
     return (
         status_code,
         {
