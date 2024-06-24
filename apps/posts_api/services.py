@@ -1,14 +1,19 @@
-from django.db.models import Q
+from django.db.models import (
+    Q,
+    Prefetch,
+)
 from django.http.request import QueryDict
 
 from posts_api.models import Post
-from posts_api.serializers import PostSerializer
+from posts_api.serializers import (
+    PostSerializer,
+    AuthorPostSerializer,
+)
 
 from users_api.models import CustomUser
 
 from utils.response_patterns import generate_response
 from utils.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -223,14 +228,11 @@ def update(slug: str, user: CustomUser, data: QueryDict) -> (int, dict):
         )
 
     validated_data = serializer.validated_data
-    # for key, value in validated_data.items():
-    #     setattr(post, key, value)
     try:
         serializer.update(
             instance=post,
             validated_data=validated_data,
         )
-        # post.save()
     except Exception as exc:
         logger.error(
             msg=f'Возникла ошибка при попытке обновления поста {post} \
@@ -306,10 +308,10 @@ def remove(slug: str, user: CustomUser) -> (int, dict):
 
 def get_posts_by_pk(pk: int, user: CustomUser) -> (int, dict):
     '''
-    Получение поста пользователя по pk
+    Получение постов пользователя по pk
 
     Args:
-        pk: идентификатор
+        pk: идентификатор пользователя
         user: пользователь
 
     Returns:
@@ -322,7 +324,10 @@ def get_posts_by_pk(pk: int, user: CustomUser) -> (int, dict):
     try:
         author = CustomUser.objects.filter(
             pk=pk,
-        ).first()
+        ).prefetch_related(
+            Prefetch("posts", queryset=Post.objects.filter(
+                Q(author=user) & Q(author__pk=pk) | Q(author__pk=pk) & Q(hidden=False)
+            ))).first()
     except Exception as exc:
         logger.error(
             msg=f'Возникла ошибка при проверке существования автора '
@@ -341,23 +346,8 @@ def get_posts_by_pk(pk: int, user: CustomUser) -> (int, dict):
             status_code=404,
         )
 
-    try:
-        posts = Post.objects.filter(
-            Q(author=user) & Q(author__pk=pk) | Q(author__pk=pk) & Q(hidden=False)
-        )
-    except Exception as exc:
-        logger.info(
-            msg=f'Возникла ошибка при получении списка постов '
-                f'автора с pk {pk} пользователем {user}',
-            exc_info=True,
-        )
-        return generate_response(
-            status_code=500,
-        )
-
-    data = PostSerializer(
-        instance=posts,
-        many=True,
+    data = AuthorPostSerializer(
+        instance=author,
     ).data
 
     logger.info(
