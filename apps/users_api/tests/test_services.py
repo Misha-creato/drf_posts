@@ -44,7 +44,7 @@ class ServicesTest(APITestCase):
             (200, 'valid'),
             (400, 'invalid_email'),
             (400, 'invalid_structure'),
-            (400, 'already_exists'),
+            (406, 'already_exists'),
             (400, 'password_mismatch'),
         )
 
