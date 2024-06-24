@@ -84,17 +84,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    @property
-    def nickname(self) -> str:
-        '''
-        Никнейм пользователя
-
-        Returns:
-            Никнейм
-        '''
-
-        return self.email.split('@')[0]
-
     def __make_thumbnail(self) -> None:
         '''
         Создание миниатюры аватара
@@ -165,7 +154,7 @@ class CustomToken(models.Model):
 
     def is_expired(self) -> bool:
         '''
-        Проверка истечения ключа
+        Проверка срока истечения ключа
 
         Returns:
             Флаг истечения ключа
