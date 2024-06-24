@@ -56,6 +56,7 @@ class PasswordRestoreSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
     confirm_password = serializers.CharField(
         max_length=128,
     )
