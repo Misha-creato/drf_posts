@@ -4,6 +4,7 @@ from typing import Callable
 from django.contrib.auth import authenticate
 from django.http.request import QueryDict
 from django.urls import reverse
+from django.db.utils import IntegrityError
 
 from notifications.services import Email
 from users_api.models import (
@@ -66,6 +67,14 @@ def register(data: QueryDict, get_url_func: Callable) -> (int, dict):
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
+        )
+    except IntegrityError as exc:
+        logger.error(
+            msg=f'Пользователь с таким email уже существует {user_data}',
+            exc_info=True,
+        )
+        return generate_response(
+            status_code=406,
         )
     except Exception as exc:
         logger.error(
