@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
+from django.contrib.auth import get_user_model
+
 from posts_api.models import Post
+
+
+User = get_user_model()
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -8,8 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
         source='author.pk',
         read_only=True,
     )
-    author_nickname = serializers.CharField(
-        source='author.nickname',
+    author_nickname = serializers.SerializerMethodField(
         read_only=True,
     )
 
@@ -30,3 +34,57 @@ class PostSerializer(serializers.ModelSerializer):
             'slug': {'read_only': True},
             'created_at': {'read_only': True},
         }
+
+    def get_author_nickname(self, obj):
+        '''
+        Получение никнейма пользователя
+
+        Returns:
+            Никнейм
+        '''
+
+        email = obj.author.email
+        return email.split('@')[0]
+
+
+class PostsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = [
+            'title',
+            'description',
+            'image',
+            'hidden',
+            'slug',
+            'created_at',
+        ]
+
+
+class AuthorPostSerializer(serializers.ModelSerializer):
+    nickname = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    posts = PostsSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'pk',
+            'nickname',
+            'thumbnail',
+            'posts',
+        ]
+
+    def get_nickname(self, obj):
+        '''
+        Получение никнейма пользователя
+
+        Returns:
+            Никнейм
+        '''
+
+        email = obj.email
+        return email.split('@')[0]
